@@ -9,7 +9,9 @@ class BasicController extends Controller
 {
     public function index()
     {
-        $qarorlar = Qaror::orderByRaw('CAST(number AS UNSIGNED) DESC')->get();
+        $qarorlar = Qaror::query()
+            ->orderByNumber() // Use scope instead of orderByRaw
+            ->paginate(25); // Changed from get() to paginate
 
         return view('welcome', compact('qarorlar'));
     }

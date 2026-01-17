@@ -1,4 +1,100 @@
-# Исправление ошибки "Method Not Allowed" на продакшене
+# Критические исправления для продакшена - Фаза 1
+
+## ⚠️ НОВЫЕ КРИТИЧЕСКИЕ ИСПРАВЛЕНИЯ (2026-01-17)
+
+### Обзор изменений
+Внесены критические исправления безопасности и производительности:
+1. ✅ **SQL Injection** - исправлен в AJAX поиске
+2. ✅ **Авторизация админки** - добавлена проверка is_admin
+3. ✅ **Производительность** - добавлена пагинация и индексы БД
+4. ✅ **Rate Limiting** - защита от DDoS на AJAX endpoint
+5. ✅ **Конфигурация** - создан .env.production.example
+
+---
+
+### СРОЧНО: Деплой на продакшен
+
+#### Шаг 1: Бэкап продакшена (ОБЯЗАТЕЛЬНО!)
+```bash
+# На сервере
+cd /var/www/qaror.sjco.uz
+mysqldump -u root -p qaror_db_dev > backup_$(date +%Y%m%d_%H%M%S).sql
+cp .env .env.backup
+```
+
+#### Шаг 2: Получить новый код
+```bash
+git pull origin main
+```
+
+#### Шаг 3: Запустить миграции
+```bash
+# Проверить что миграции безопасны
+php artisan migrate --pretend
+
+# Если все ок - запустить
+php artisan migrate --force
+```
+
+**Новые миграции:**
+- `add_is_admin_to_users_table.php` - добавляет поле is_admin
+- `add_indexes_to_qarors_table.php` - добавляет индексы для производительности
+
+#### Шаг 4: Установить is_admin для существующих админов
+```bash
+php artisan tinker
+
+# В консоли:
+$users = App\Models\User::all();
+foreach($users as $user) {
+    $user->is_admin = true;
+    $user->save();
+}
+exit
+```
+
+#### Шаг 5: Обновить .env конфигурацию
+Скопируйте настройки из `.env.production.example` в ваш `.env`:
+
+**КРИТИЧЕСКИЕ ИЗМЕНЕНИЯ:**
+```env
+APP_DEBUG=false                 # Было: true
+APP_ENV=production              # Было: local
+SESSION_ENCRYPT=true            # Было: false
+QUEUE_CONNECTION=database       # Было: sync
+LOG_STACK=daily                 # Было: single
+LOG_LEVEL=error                 # Было: debug
+DB_PASSWORD=ваш_пароль          # Было: пусто
+```
+
+#### Шаг 6: Очистить кеши
+```bash
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+#### Шаг 7: Перезапустить сервисы
+```bash
+sudo systemctl restart nginx
+sudo systemctl restart php8.2-fpm
+```
+
+---
+
+### Верификация после деплоя
+
+**Проверьте следующее:**
+1. ✅ AJAX поиск работает: https://qaror.sjco.uz/qarorlar/ajax-search?q=test
+2. ✅ Не-админы не могут войти в `/admin`
+3. ✅ Главная страница имеет пагинацию
+4. ✅ APP_DEBUG=false (не показывает ошибки публично)
+5. ✅ Проверьте логи: `tail -f storage/logs/laravel.log`
+
+---
+
+## Исправление ошибки "Method Not Allowed" (старая проблема)
 
 ## Проблема
 На продакшене (qaror.sjco.uz) при попытке войти в админ панель появляется ошибка:

@@ -14,7 +14,19 @@ class Qaror extends Model
         'number',
         'file',
         'text',
+        'views', // Added: for view counter
     ];
-    public $casts = [ 'created_date' => 'date'];
 
+    public $casts = ['created_date' => 'date'];
+
+    /**
+     * Scope to order qarorlar by number (numeric sorting)
+     *
+     * @param \Illuminate\Database\Eloquent\Builder $query
+     * @return \Illuminate\Database\Eloquent\Builder
+     */
+    public function scopeOrderByNumber($query)
+    {
+        return $query->orderByRaw('CAST(number AS UNSIGNED) DESC');
+    }
 }
