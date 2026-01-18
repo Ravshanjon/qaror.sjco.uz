@@ -2,6 +2,7 @@
 
 namespace App\Livewire;
 
+use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithPagination;
 use App\Models\Qaror;
@@ -44,16 +45,21 @@ class QarorlarTable extends Component
             ->when(trim($this->number) !== '', function ($q) {
                 $q->where('number', 'like', '%' . trim($this->number) . '%');
             })
-            ->orderByDesc('number')
             ->when($this->year !== '', function ($q) {
                 $q->whereYear('created_date', $this->year);
             })
-            ->orderByRaw('CAST(number AS UNSIGNED) DESC')
-           ->paginate($this->perPage);
+            ->orderByNumber() // Use scope instead of duplicate orderBy
+            ->paginate($this->perPage);
 
         return view('livewire.qarorlar-table', compact('qarorlar'));
     }
-    public function getYearsProperty()
+
+    /**
+     * Get distinct years from qarorlar (cached)
+     * Using #[Computed] to cache result and avoid N+1
+     */
+    #[Computed]
+    public function years()
     {
         return Qaror::query()
             ->selectRaw('YEAR(created_date) as y')

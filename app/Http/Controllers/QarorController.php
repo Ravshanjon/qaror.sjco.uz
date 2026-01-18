@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Imports\QarorlarImport;
+use App\Jobs\ImportQarorExcelJob;
 use App\Models\Qaror;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -66,11 +67,15 @@ class QarorController extends Controller
     public function import(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx,csv',
+            'file' => 'required|mimes:xlsx,csv|max:10240', // Max 10MB
         ]);
 
-        Excel::import(new QarorlarImport, $request->file('file'));
+        // Store the uploaded file temporarily
+        $filePath = $request->file('file')->store('temp-imports');
 
-        return back()->with('success', 'Qarorlar muvaffaqiyatli import qilindi!');
+        // Dispatch async job for import
+        ImportQarorExcelJob::dispatch(storage_path('app/' . $filePath));
+
+        return back()->with('success', 'Import jarayoni boshlandi! Qarorlar tez orada qo\'shiladi.');
     }
 }

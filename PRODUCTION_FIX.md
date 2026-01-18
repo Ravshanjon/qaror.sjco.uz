@@ -94,6 +94,157 @@ sudo systemctl restart php8.2-fpm
 
 ---
 
+# Оптимизации производительности - Фаза 2
+
+## ⚡ ВАЖНЫЕ ОПТИМИЗАЦИИ (2026-01-18)
+
+### Обзор изменений
+Внесены важные оптимизации производительности и улучшения качества кода:
+1. ✅ **N+1 запросы** - оптимизированы в Livewire с кешированием
+2. ✅ **Дублирование кода** - удалены повторяющиеся orderBy
+3. ✅ **Мертвый код** - удален неиспользуемый метод generatePublishedId
+4. ✅ **Счетчик просмотров** - активирован для PDF документов
+5. ✅ **Асинхронный импорт** - Excel импорт теперь выполняется в фоне через очереди
+6. ✅ **Queue Worker** - добавлена конфигурация Supervisor
+
+---
+
+### Деплой Фазы 2 на продакшен
+
+#### Шаг 1: Получить новый код
+```bash
+cd /var/www/qaror.sjco.uz
+git pull origin main
+```
+
+#### Шаг 2: Обновить .env (если еще не сделано)
+Убедитесь что в `.env` установлено:
+```env
+QUEUE_CONNECTION=database  # Для асинхронного импорта
+```
+
+#### Шаг 3: Настроить Queue Worker через Supervisor
+```bash
+# Скопировать конфигурацию
+sudo cp supervisor-queue.conf /etc/supervisor/conf.d/qaror-queue-worker.conf
+
+# Обновить supervisor
+sudo supervisorctl reread
+sudo supervisorctl update
+
+# Запустить worker
+sudo supervisorctl start qaror-queue-worker:*
+
+# Проверить статус
+sudo supervisorctl status
+```
+
+**Конфигурация в файле:**
+- Worker будет автоматически перезапускаться при падении
+- Обрабатывает 1 задачу за раз
+- Максимальное время выполнения: 1 час
+- 3 попытки при ошибке
+- Логи: `/var/www/qaror.sjco.uz/storage/logs/queue-worker.log`
+
+#### Шаг 4: Очистить кеши
+```bash
+php artisan optimize:clear
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+```
+
+#### Шаг 5: Перезапустить сервисы
+```bash
+sudo systemctl restart nginx
+sudo systemctl restart php8.2-fpm
+```
+
+---
+
+### Верификация Фазы 2
+
+**Проверьте следующее:**
+
+1. ✅ **Queue Worker работает:**
+```bash
+sudo supervisorctl status qaror-queue-worker:*
+# Должно показать: RUNNING
+```
+
+2. ✅ **Excel импорт асинхронный:**
+   - Загрузите Excel файл через админку
+   - Должно появиться сообщение: "Import jarayoni boshlandi! Qarorlar tez orada qo'shiladi."
+   - Импорт должен завершиться в фоне
+   - Проверьте логи: `tail -f storage/logs/queue-worker.log`
+
+3. ✅ **Счетчик просмотров работает:**
+   - Откройте любой PDF документ
+   - Обновите страницу несколько раз
+   - Колонка `views` в БД должна увеличиваться
+
+4. ✅ **Производительность улучшена:**
+   - Фильтр по годам загружается быстрее (кеширование)
+   - Нет дублирующихся SQL запросов в логах
+
+5. ✅ **Очередь обрабатывается:**
+```bash
+# Проверить задачи в очереди
+php artisan queue:work --once
+# или посмотреть в таблице jobs
+```
+
+---
+
+### Управление Queue Worker
+
+**Полезные команды:**
+
+```bash
+# Просмотр статуса
+sudo supervisorctl status qaror-queue-worker:*
+
+# Остановка worker
+sudo supervisorctl stop qaror-queue-worker:*
+
+# Запуск worker
+sudo supervisorctl start qaror-queue-worker:*
+
+# Перезапуск worker (после обновления кода)
+sudo supervisorctl restart qaror-queue-worker:*
+
+# Просмотр логов
+tail -f /var/www/qaror.sjco.uz/storage/logs/queue-worker.log
+
+# Очистка неудачных задач
+php artisan queue:flush
+```
+
+---
+
+### Откат Фазы 2 (если нужно)
+
+Если возникли проблемы с queue worker:
+
+```bash
+# 1. Остановить worker
+sudo supervisorctl stop qaror-queue-worker:*
+
+# 2. Изменить в .env
+QUEUE_CONNECTION=sync  # Вернуть синхронный режим
+
+# 3. Очистить конфигурацию
+php artisan config:clear
+php artisan config:cache
+
+# 4. Перезапустить сервисы
+sudo systemctl restart php8.2-fpm
+```
+
+Импорт будет работать синхронно (блокирующе), но без проблем.
+
+---
+
 ## Исправление ошибки "Method Not Allowed" (старая проблема)
 
 ## Проблема
