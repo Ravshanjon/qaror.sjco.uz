@@ -15,6 +15,12 @@ class SecurityHeaders
     {
         $response = $next($request);
 
+        // Apply security headers ONLY on production environment
+        // On dev/local/staging - skip all security headers to avoid CSP issues
+        if (!app()->environment('production')) {
+            return $response;
+        }
+
         // Security headers for production
         $response->headers->set('X-Frame-Options', 'SAMEORIGIN');
         $response->headers->set('X-Content-Type-Options', 'nosniff');
@@ -22,10 +28,8 @@ class SecurityHeaders
         $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
-        // HSTS for HTTPS (only in production)
-        if (app()->environment('production')) {
-            $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
-        }
+        // HSTS for HTTPS (production only)
+        $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
 
         // Content Security Policy (adjust as needed for your app)
         $csp = [
