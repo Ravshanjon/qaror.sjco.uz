@@ -17,14 +17,19 @@ class QarorlarTable extends Component
     public string $search = '';
     public string $number = '';
     public string $year   = '';
-    public int $perPage = 25;
+    public int $perPage;
 
     protected $queryString = [
         'search'  => ['except' => ''],
         'number'  => ['except' => ''],
         'year'    => ['except' => ''],
-        'perPage' => ['except' => 25],
+        'perPage' => ['except' => null],
     ];
+
+    public function mount()
+    {
+        $this->perPage = config('qaror.items_per_page', 25);
+    }
 
     public function updatedSearch()  { $this->resetPage(); }
     public function updatedNumber()  { $this->resetPage(); }

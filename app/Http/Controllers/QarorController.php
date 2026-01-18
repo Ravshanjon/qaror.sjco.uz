@@ -2,22 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\ImportQarorRequest;
+use App\Http\Requests\StoreQarorRequest;
+use App\Http\Requests\UpdateQarorRequest;
 use App\Imports\QarorlarImport;
 use App\Jobs\ImportQarorExcelJob;
 use App\Models\Qaror;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Maatwebsite\Excel\Facades\Excel;
 
 class QarorController extends Controller
 {
-    public function store(Request $request)
+    public function store(StoreQarorRequest $request)
     {
-        $data = $request->validate([
-            'published_id' => 'required|integer|unique:qarors,published_id',
-            'title' => 'required|string|max:255',
-            'pdf' => 'required|file|mimes:pdf|max:20480', // 20MB
-        ]);
+        $data = $request->validated();
 
         $qaror = Qaror::create([
             'published_id' => $data['published_id'],
@@ -36,12 +34,8 @@ class QarorController extends Controller
 
         return back()->with('success', 'Qaror saqlandi');
     }
-    public function update(Request $request, Qaror $qaror)
+    public function update(UpdateQarorRequest $request, Qaror $qaror)
     {
-        $request->validate([
-            'pdf' => 'nullable|file|mimes:pdf|max:20480',
-        ]);
-
         if ($request->hasFile('pdf')) {
 
             // 🔥 eski PDF ni o‘chiramiz
@@ -64,12 +58,8 @@ class QarorController extends Controller
     }
 
 
-    public function import(Request $request)
+    public function import(ImportQarorRequest $request)
     {
-        $request->validate([
-            'file' => 'required|mimes:xlsx,csv|max:10240', // Max 10MB
-        ]);
-
         // Store the uploaded file temporarily
         $filePath = $request->file('file')->store('temp-imports');
 
