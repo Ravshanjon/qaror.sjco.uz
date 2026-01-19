@@ -61,17 +61,28 @@ class QarorlarTable extends Component
 
     /**
      * Get distinct years from qarorlar (cached)
-     * Using #[Computed] to cache result and avoid N+1
+     * Using #[Computed] to cache result within request
+     * Using Cache::remember for cross-request caching
      */
     #[Computed]
     public function years()
     {
-        return Qaror::query()
-            ->selectRaw('YEAR(created_date) as y')
-            ->whereNotNull('created_date')
-            ->distinct()
-            ->orderByDesc('y')
-            ->pluck('y');
+        return \Illuminate\Support\Facades\Cache::remember('qarorlar_years', 86400, function () {
+            $driver = config('database.default');
+            $connection = config("database.connections.{$driver}.driver");
+
+            // Use different SQL for SQLite vs MySQL
+            $yearExpression = $connection === 'sqlite'
+                ? "strftime('%Y', created_date) as y"
+                : 'YEAR(created_date) as y';
+
+            return Qaror::query()
+                ->selectRaw($yearExpression)
+                ->whereNotNull('created_date')
+                ->distinct()
+                ->orderByDesc('y')
+                ->pluck('y');
+        });
     }
 }
 

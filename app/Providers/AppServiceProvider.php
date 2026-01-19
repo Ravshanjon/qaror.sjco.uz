@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Models\Qaror;
+use App\Observers\QarorObserver;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\ServiceProvider;
 
@@ -22,5 +24,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Paginator::useBootstrap();
+
+        // Register Qaror Observer for cache invalidation
+        Qaror::observe(QarorObserver::class);
     }
 }

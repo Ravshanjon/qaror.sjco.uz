@@ -5,11 +5,12 @@ namespace App\Http\Controllers;
 use App\Models\Qaror;
 use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\Cache;
 
 class AjaxSearchController extends Controller
 {
     /**
-     * Search qarorlar by title
+     * Search qarorlar by title (cached for popular queries)
      *
      * @param Request $request
      * @return JsonResponse
@@ -27,12 +28,17 @@ class AjaxSearchController extends Controller
             return response()->json([]);
         }
 
-        $qarorlar = Qaror::query()
-            ->where('title', 'like', '%' . trim($query) . '%')
-            ->orderByNumber()  // Will create this scope next
-            ->limit(20)
-            ->select(['id', 'title', 'number', 'created_date']) // Only needed fields
-            ->get();
+        $normalizedQuery = trim(strtolower($query));
+        $cacheKey = "ajax_search_" . md5($normalizedQuery);
+
+        $qarorlar = Cache::remember($cacheKey, 1800, function () use ($query) {
+            return Qaror::query()
+                ->where('title', 'like', '%' . trim($query) . '%')
+                ->orderByNumber()
+                ->limit(20)
+                ->select(['id', 'title', 'number', 'created_date'])
+                ->get();
+        });
 
         return response()->json($qarorlar);
     }
