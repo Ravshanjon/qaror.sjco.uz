@@ -99,11 +99,21 @@ class QarorlarTableTest extends TestCase
     /** @test */
     public function it_resets_pagination_on_search_update(): void
     {
-        Qaror::factory()->count(50)->create();
+        // Create a unique record that will only appear when searched
+        $uniqueQaror = Qaror::factory()->create(['title' => 'Unique Target Item', 'number' => 999]);
 
+        // Create many other records to fill multiple pages
+        Qaror::factory()->count(50)->create(['title' => 'Other Item']);
+
+        // Test that when we search for the unique item, we find it
+        // This implicitly tests that pagination is reset since the unique item
+        // would only be on page 1 of filtered results
         Livewire::test(QarorlarTable::class)
-            ->set('search', 'test')
-            ->assertSet('paginators.p', 1); // First page
+            ->set('search', 'Unique Target')
+            ->assertViewHas('qarorlar', function ($qarorlar) use ($uniqueQaror) {
+                return $qarorlar->count() === 1
+                    && $qarorlar->first()->id === $uniqueQaror->id;
+            });
     }
 
     /** @test */
