@@ -15,11 +15,14 @@ use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
 use Filament\Tables;
+use Filament\Tables\Actions\Action;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\QarorlarImport;
 
 class QarorlarResource extends Resource
 {
@@ -93,6 +96,27 @@ class QarorlarResource extends Resource
                     ->openUrlInNewTab()
                     ->badge('success')
                     ->formatStateUsing(fn() => 'PDF'),
+            ])
+            ->headerActions([
+                Action::make('excelImport')
+                    ->label('Excel yuklash')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->form([
+                        FileUpload::make('file')
+                            ->label('Excel fayl')
+                            ->required()
+                            ->disk('local')
+                            ->directory('imports')
+                            ->storeFiles()
+                            ->acceptedFileTypes([
+                                'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+                                'application/vnd.ms-excel',
+                            ]),
+                    ])
+                    ->action(function (array $data) {
+                        $absolutePath = storage_path('app/private/' . $data['file']);
+                        Excel::import(new QarorlarImport, $absolutePath);
+                    })
             ])
             ->filters([
                 Filter::make('title')
