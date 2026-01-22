@@ -113,7 +113,7 @@ class QarorlarResource extends Resource
                                 'application/vnd.ms-excel',
                             ]),
                     ])
-                    ->action(function (array $data) {
+                    ->action(function (array $data, Action $action) {
                         try {
                             $absolutePath = storage_path('app/private/'.$data['file']);
                             Excel::import(new QarorlarImport, $absolutePath);
@@ -122,12 +122,17 @@ class QarorlarResource extends Resource
                                 ->title('Excel muvaffaqiyatli yuklandi!')
                                 ->success()
                                 ->send();
+
+                            // Redirect to avoid Livewire DOM unmounting error
+                            redirect(static::getUrl('index'));
                         } catch (\Exception $e) {
                             Notification::make()
                                 ->title('Xatolik yuz berdi')
                                 ->body($e->getMessage())
                                 ->danger()
                                 ->send();
+
+                            $action->halt();
                         }
                     }),
             ])
