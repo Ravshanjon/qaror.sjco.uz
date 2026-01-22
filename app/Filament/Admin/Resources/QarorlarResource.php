@@ -3,16 +3,15 @@
 namespace App\Filament\Admin\Resources;
 
 use App\Filament\Admin\Resources\QarorlarResource\Pages;
-use App\Filament\Admin\Resources\QarorlarResource\RelationManagers;
+use App\Imports\QarorlarImport;
 use App\Models\Qaror;
-use App\Models\Qarorlar;
-use Filament\Forms;
 use Filament\Forms\Components\DatePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Grid;
 use Filament\Forms\Components\Section;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Form;
+use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Tables;
 use Filament\Tables\Actions\Action;
@@ -20,10 +19,7 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Maatwebsite\Excel\Facades\Excel;
-use App\Imports\QarorlarImport;
-use Filament\Notifications\Notification;
 
 class QarorlarResource extends Resource
 {
@@ -60,7 +56,7 @@ class QarorlarResource extends Resource
                         TextInput::make('published_id')
                             ->disabled()
                             ->dehydrated(false)
-                            ->default(fn() => random_int(10000, 99999))
+                            ->default(fn () => random_int(10000, 99999))
                             ->label('Public ID'),
 
                         FileUpload::make('pdf_path')
@@ -70,7 +66,7 @@ class QarorlarResource extends Resource
                             ->acceptedFileTypes(['application/pdf'])
                             ->preserveFilenames()
                             ->downloadable()
-                            ->openable()
+                            ->openable(),
 
                     ])
                     ->columnSpanFull(),
@@ -86,22 +82,25 @@ class QarorlarResource extends Resource
                 TextColumn::make('title')->limit(80)->label('Nomlanishi'),
                 TextColumn::make('number')
                     ->label('Qaror raqami')
-                    ->formatStateUsing(fn($state) => '№ ' . $state),
-                TextColumn::make('created_at')
+                    ->formatStateUsing(fn ($state) => '№ '.$state),
+                TextColumn::make('created_date')
                     ->date('d.m.Y')
                     ->label('Qaror chiqgan sana'),
 
                 TextColumn::make('pdf_path')
                     ->label('PDF')
-                    ->url(fn($record) => url('/pdfs/' . $record->number))
+                    ->url(fn ($record) => $record->pdf_path ? url('/pdfs/'.$record->number) : null)
                     ->openUrlInNewTab()
-                    ->badge('success')
-                    ->formatStateUsing(fn() => 'PDF'),
+                    ->badge()
+                    ->color(fn ($state) => $state ? 'success' : 'gray')
+                    ->formatStateUsing(fn ($state) => $state ? 'PDF' : '-'),
             ])
             ->headerActions([
                 Action::make('excelImport')
                     ->label('Excel yuklash')
                     ->icon('heroicon-o-arrow-up-tray')
+                    ->modalWidth('md')
+                    ->closeModalByClickingAway(false)
                     ->form([
                         FileUpload::make('file')
                             ->label('Excel fayl')
@@ -115,14 +114,22 @@ class QarorlarResource extends Resource
                             ]),
                     ])
                     ->action(function (array $data) {
-                        $absolutePath = storage_path('app/private/' . $data['file']);
-                        Excel::import(new QarorlarImport, $absolutePath);
+                        try {
+                            $absolutePath = storage_path('app/private/'.$data['file']);
+                            Excel::import(new QarorlarImport, $absolutePath);
 
-                        Notification::make()
-                            ->title('Excel muvaffaqiyatli yuklandi!')
-                            ->success()
-                            ->send();
-                    })
+                            Notification::make()
+                                ->title('Excel muvaffaqiyatli yuklandi!')
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Xatolik yuz berdi')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ])
             ->filters([
                 Filter::make('title')
@@ -130,9 +137,9 @@ class QarorlarResource extends Resource
                         TextInput::make('title')
                             ->label('Nomlanishi'),
                     ])
-                    ->query(fn(Builder $query, array $data) => $query->when(
+                    ->query(fn (Builder $query, array $data) => $query->when(
                         $data['title'] ?? null,
-                        fn($q, $title) => $q->where('title', 'like', "%{$title}%")
+                        fn ($q, $title) => $q->where('title', 'like', "%{$title}%")
                     )
                     ),
 
@@ -141,9 +148,9 @@ class QarorlarResource extends Resource
                         TextInput::make('number')
                             ->label('Qaror raqami'),
                     ])
-                    ->query(fn(Builder $query, array $data) => $query->when(
+                    ->query(fn (Builder $query, array $data) => $query->when(
                         $data['number'] ?? null,
-                        fn($q, $number) => $q->where('number', 'like', "%{$number}%")
+                        fn ($q, $number) => $q->where('number', 'like', "%{$number}%")
                     )
                     ),
             ])
@@ -154,7 +161,8 @@ class QarorlarResource extends Resource
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
-            ]);
+            ])
+            ->defaultSort('id', 'desc');
     }
 
     public static function getRelations(): array
