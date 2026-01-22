@@ -34,30 +34,25 @@ class QarorlarResource extends Resource
                 Section::make()
                     ->schema([
                         Grid::make(3)->schema([
-                            TextInput::make('title')->label('Номланиши')
+                            TextInput::make('title')
+                                ->label('Nomlanishi')
+                                ->required()
                                 ->columnSpanFull(),
-
                         ]),
                         Grid::make(2)->schema([
                             DatePicker::make('created_date')
-                                ->label('Қарор чиқарилган сана')
+                                ->label('Qaror chiqarilgan sana')
                                 ->suffixIcon('heroicon-o-calendar')
                                 ->displayFormat('d.m.Y')
                                 ->maxDate(now())
                                 ->placeholder('26.12.2025')
-                                ->columns(1)
                                 ->native(false),
 
-                            TextInput::make('number')->label('Қарор рақами')
-                                ->placeholder('2055')
-                                ->columnSpan(1),
-
+                            TextInput::make('number')
+                                ->label('Qaror raqami')
+                                ->required()
+                                ->placeholder('2055'),
                         ]),
-                        TextInput::make('published_id')
-                            ->disabled()
-                            ->dehydrated(false)
-                            ->default(fn () => random_int(10000, 99999))
-                            ->label('Public ID'),
 
                         FileUpload::make('pdf_path')
                             ->label('PDF fayl')
@@ -79,14 +74,22 @@ class QarorlarResource extends Resource
         return $table
             ->columns([
                 TextColumn::make('id')->rowIndex(false),
-                TextColumn::make('title')->limit(80)->label('Nomlanishi'),
+                TextColumn::make('title')
+                    ->limit(80)
+                    ->label('Nomlanishi')
+                    ->searchable(),
                 TextColumn::make('number')
                     ->label('Qaror raqami')
-                    ->formatStateUsing(fn ($state) => '№ '.$state),
+                    ->formatStateUsing(fn ($state) => '№ '.$state)
+                    ->searchable(),
                 TextColumn::make('created_date')
                     ->date('d.m.Y')
-                    ->label('Qaror chiqgan sana'),
-
+                    ->label('Qaror chiqgan sana')
+                    ->sortable(),
+                TextColumn::make('views')
+                    ->label('Ko\'rishlar')
+                    ->sortable()
+                    ->alignCenter(),
                 TextColumn::make('pdf_path')
                     ->label('PDF')
                     ->url(fn ($record) => $record->pdf_path ? url('/pdfs/'.$record->number) : null)
@@ -160,7 +163,9 @@ class QarorlarResource extends Resource
                     ),
             ])
             ->actions([
+                Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
+                Tables\Actions\DeleteAction::make(),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
@@ -180,7 +185,7 @@ class QarorlarResource extends Resource
     public static function getPages(): array
     {
         return [
-            'index' => Pages\ListQarorlars::route('/'),
+            'index' => Pages\ListQarorlar::route('/'),
             'create' => Pages\CreateQarorlar::route('/create'),
             'edit' => Pages\EditQarorlar::route('/{record}/edit'),
         ];

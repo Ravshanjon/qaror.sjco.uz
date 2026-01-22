@@ -6,7 +6,7 @@ use App\Filament\Admin\Resources\QarorlarResource;
 use Filament\Actions;
 use Filament\Resources\Pages\ListRecords;
 
-class ListQarorlars extends ListRecords
+class ListQarorlar extends ListRecords
 {
     protected static string $resource = QarorlarResource::class;
 
