@@ -23,6 +23,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Imports\QarorlarImport;
+use Filament\Notifications\Notification;
 
 class QarorlarResource extends Resource
 {
@@ -116,6 +117,11 @@ class QarorlarResource extends Resource
                     ->action(function (array $data) {
                         $absolutePath = storage_path('app/private/' . $data['file']);
                         Excel::import(new QarorlarImport, $absolutePath);
+
+                        Notification::make()
+                            ->title('Excel muvaffaqiyatli yuklandi!')
+                            ->success()
+                            ->send();
                     })
             ])
             ->filters([
