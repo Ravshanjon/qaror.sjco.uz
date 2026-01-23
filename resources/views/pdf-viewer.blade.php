@@ -63,7 +63,7 @@
 </script>
 <div class="bg-white p-3 md:p-6 rounded-lg max-w-7xl mx-auto">
     <div class="flex items-center gap-5 border-b pb-5 mb-5">
-        <div class="flex items-center">
+        <a href="/" class="flex items-center hover:opacity-80 transition-opacity">
             <div>
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
                      stroke="gray" class="w-12 h-12 md:size-16">
@@ -72,9 +72,9 @@
                 </svg>
             </div>
             <div class="text-sm md:text-xl font-bold uppercase leading-tight">
-                SUDYALAR OLIY KENGASHINING <br> QARORI
+                SUDYALAR OLIY KENGASHINING <br> QARORLARI
             </div>
-        </div>
+        </a>
     </div>
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
         <div class="max-w-2xl font-semibold text-zinc-600 text-sm md:text-md border p-2 rounded-lg">

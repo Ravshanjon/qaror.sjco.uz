@@ -21,7 +21,7 @@
                 </svg>
             </div>
             <a href="/" class="text-xl font-bold uppercase leading-tight">
-                SUDYALAR OLIY KENGASHINING <br> QARORI
+                SUDYALAR OLIY KENGASHINING <br> QARORLARI
             </a>
 
         </div>
