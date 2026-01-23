@@ -14,7 +14,8 @@
         .pdf-page-wrapper {
             display: flex;
             justify-content: center;
-            margin-bottom: 10px;
+            margin-top: 50px;
+            margin-bottom: 50px;
         }
         .pdf-page-wrapper canvas {
             box-shadow: 0 2px 10px rgba(0,0,0,0.3);
