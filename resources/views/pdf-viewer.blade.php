@@ -140,6 +140,8 @@
             loadingEl.style.display = 'none';
 
             const containerWidth = document.getElementById('pdf-container').clientWidth;
+            // Get device pixel ratio for high-DPI screens (Android phones typically have 2-3x)
+            const pixelRatio = window.devicePixelRatio || 1;
 
             for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
                 const page = await pdf.getPage(pageNum);
@@ -150,21 +152,29 @@
                 const scale = desiredWidth / viewport.width;
                 const scaledViewport = page.getViewport({ scale: scale });
 
+                // Create viewport for high-DPI rendering
+                const highResViewport = page.getViewport({ scale: scale * pixelRatio });
+
                 const wrapper = document.createElement('div');
                 wrapper.className = 'pdf-page-wrapper';
 
                 const canvas = document.createElement('canvas');
                 const context = canvas.getContext('2d');
 
-                canvas.height = scaledViewport.height;
-                canvas.width = scaledViewport.width;
+                // Set actual canvas size (high resolution)
+                canvas.height = highResViewport.height;
+                canvas.width = highResViewport.width;
+
+                // Set display size via CSS (scaled down to look crisp)
+                canvas.style.width = scaledViewport.width + 'px';
+                canvas.style.height = scaledViewport.height + 'px';
 
                 wrapper.appendChild(canvas);
                 container.appendChild(wrapper);
 
                 await page.render({
                     canvasContext: context,
-                    viewport: scaledViewport
+                    viewport: highResViewport
                 }).promise;
             }
         } catch (error) {
