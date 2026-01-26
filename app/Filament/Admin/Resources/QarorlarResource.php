@@ -88,6 +88,12 @@ class QarorlarResource extends Resource
                     ->sortable(),
                 TextColumn::make('views')
                     ->label('Ko\'rishlar')
+                    ->formatStateUsing(function ($state) {
+                        if ($state >= 1000) {
+                            return round($state / 1000, 1) . 'k';
+                        }
+                        return $state;
+                    })
                     ->sortable()
                     ->alignCenter(),
                 TextColumn::make('pdf_path')
