@@ -94,7 +94,7 @@
                     <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
                 </svg>
                 <div class="font-semibold text-xs md:text-sm">
-                    {{ number_format($qaror->views) }}
+                    {{ $qaror->views >= 1000 ? round($qaror->views / 1000, 1) . 'k' : $qaror->views }}
                 </div>
             </div>
             @if($qaror->pdf_path)
