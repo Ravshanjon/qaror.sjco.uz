@@ -57,17 +57,17 @@
             <tbody>
             @forelse($qarorlar as $i => $q)
                 <tr class="border-b hover:bg-gray-50">
-                    <td class="px-4 text-sm/6 font-semibold text-gray-900 sm:flex-row sm:gap-2 sm:pr-4 dark:text-gray-400 py-3">
+                    <td class="px-4 text-sm/6 font-semibold text-black sm:flex-row sm:gap-2 sm:pr-4 dark:text-gray-400 py-3">
                         {{ $qarorlar->firstItem() + $i }}.
                     </td>
                     <td class="px-4 py-3">
                         <a href="{{ route('pdf.show', ['number' => $q->number]) }}"
-                           class="text-sm/6 font-semibold text-gray-900 sm:flex-row sm:gap-2 sm:pr-4 dark:text-gray-400 hover:underline">
+                           class="text-sm/6 font-semibold text-black sm:flex-row sm:gap-2 sm:pr-4 dark:text-gray-400 hover:underline">
                             {{ $q->title }}
                         </a>
                     </td>
-                    <td class="px-4 py-3 text-sm/6 font-medium  text-gray-900 sm:flex-row sm:gap-2 sm:pr-4 dark:text-gray-400">№ {{ $q->number }}</td>
-                    <td class="px-4 py-3 text-sm/6 font-medium text-gray-900 sm:flex-row sm:gap-2 sm:pr-4 dark:text-gray-400">
+                    <td class="px-4 py-3 text-sm/6 font-medium  text-black sm:flex-row sm:gap-2 sm:pr-4 dark:text-gray-400">№ {{ $q->number }}</td>
+                    <td class="px-4 py-3 text-sm/6 font-mediu text-black sm:flex-row sm:gap-2 sm:pr-4 dark:text-gray-400">
                         {{ \Carbon\Carbon::parse($q->created_date)->format('d.m.Y') }}
                     </td>
                 </tr>
