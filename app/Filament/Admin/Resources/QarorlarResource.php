@@ -108,7 +108,7 @@ class QarorlarResource extends Resource
                 Action::make('csvExport')
                     ->label('CSV yuklab olish')
                     ->icon('heroicon-o-arrow-down-tray')
-                    ->url(route('qarorlar.export-csv'))
+                    ->url(fn () => route('qarorlar.export-csv'))
                     ->openUrlInNewTab(),
                 Action::make('excelImport')
                     ->label('Excel yuklash')
