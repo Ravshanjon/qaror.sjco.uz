@@ -2,6 +2,7 @@
 
 namespace App\Filament\Admin\Resources;
 
+use App\Exports\QarorlarExport;
 use App\Filament\Admin\Resources\QarorlarResource\Pages;
 use App\Imports\QarorlarImport;
 use App\Models\Qaror;
@@ -105,6 +106,12 @@ class QarorlarResource extends Resource
                     ->formatStateUsing(fn ($state) => $state ? 'PDF' : '-'),
             ])
             ->headerActions([
+                Action::make('csvExport')
+                    ->label('CSV yuklab olish')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->action(function () {
+                        return Excel::download(new QarorlarExport, 'qarorlar-'.now()->format('Y-m-d').'.csv', \Maatwebsite\Excel\Excel::CSV);
+                    }),
                 Action::make('excelImport')
                     ->label('Excel yuklash')
                     ->icon('heroicon-o-arrow-up-tray')
